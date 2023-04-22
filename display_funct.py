@@ -4,6 +4,8 @@ from pygame.locals import *
 
 # global screen vairable to be used globaly (as all parts of the game
 # refrence the same screen)
+import game_logic
+
 global screen
 
 # colors definitions for pygame
@@ -18,6 +20,10 @@ nice_one = (95, 158, 160)
 last_played = []
 pygame.font.init()
 check = 0
+players = 0
+active_player = 1
+till_math = 6
+hey = 6
 
 # defining screen 16:9 native
 size_o = screen_width, screen_height = 1600, 900
@@ -37,90 +43,61 @@ screen.fill(nice_one)
 card_width = 130
 card_height = 182
 def_rect = pygame.Rect(0, 0, card_width, card_height)
+def_small_rect = pygame.Rect(0, 0, 32, 45)
 
 # defining the default facedown card value
 face_down_card = game_classes.Card(
     "face_down", "small_cards/card_back_alt.png", None)
 
 
-def pygame_text_input_field():
-
-    # Create a font object
-    pygame.font.init()
-    font = pygame.font.SysFont("arial", 32)
-    # Create a text input box
-    text_input = pygame.Rect(50, 50, 140, 32)
-
-    # Create a color for the text input box
-    color_inactive = pygame.Color('lightskyblue3')
-    color_active = pygame.Color('dodgerblue2')
-    color = color_inactive
-
-    # Create a variable to store the text
-    text = ''
-
+def pygame_text_input_field(text_input, text, active, texting):
+    screen.fill(nice_one)
+    font = pygame.font.SysFont("Calibri", 82)
+    color_inactive = pygame.Color(255, 255, 255)
+    color_active = pygame.Color(255, 255, 255)
+    if active:
+        color = color_active
+    else:
+        color = color_inactive
+    txt_surface = font.render(text, True, color)
+    screen.blit(txt_surface, (text_input.x + 10, text_input.y + 7))
+    text = font.render(texting, True, white, nice_one)
+    textRect = text.get_rect()
+    textRect.center = (600, 450)
+    screen.blit(text, textRect)
+    width = max(400, txt_surface.get_width() + 10)
+    text_input.w = width
+    pygame.draw.rect(screen, color, text_input, 2)
+    pygame.display.flip()
     # Create a flag to check if the text input box is active
-    active = False
-
-    while True:
-        # Get events from the event queue
-        for event in pygame.event.get():
-            # Check if the user has quit
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return text
-
-            # Check if the user has clicked on the text input box
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                # If the user has clicked on the text input box
-                if text_input.collidepoint(event.pos):
-                    # Set the active flag to True
-                    active = not active
-                else:
-                    # Set the active flag to False
-                    active = False
-                # Change the color of the text input box
-                color = color_active if active else color_inactive
-
-            # Check if the user has pressed a key
-            if event.type == pygame.KEYDOWN:
-                # If the user has pressed the backspace key
-                if event.key == pygame.K_BACKSPACE:
-                    # Remove the last character from the text
-                    text = text[:-1]
-                elif event.key == pygame.K_RETURN:
-                    print(text)
-                    text = ''
-                else:
-                    # Add the character to the text
-                    text += event.unicode
-
-        txt_surface = font.render(text, True, color)
-        screen.blit(txt_surface, (text_input.x + 5, text_input.y + 5))
 
 
 def adding(color, type):
     # global check
     # check = 1
-    print(type)
-    print(color)
+    global players
+    print(type + 'TYYYYYYYYYYYYYYPE')
+    print(color + "COLOOOOOOOOOOOOOR")
+    print(last_played)
     colors = 'bryg'
     colors1 = ['blue', 'red', 'yellow', 'green']
     types = '0123456789prs'
     types1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'picker', 'reverse', 'skip']
     if color in colors:
         file = "small_cards/" + colors1[colors.find(color)] + "_" + types1[types.find(type)]
+    elif type == 'd':
+        file = 'small_cards/wild_pick_four'
     else:
         file = 'small_cards/wild_color_changer'
     if len(last_played) != 0:
         if len(last_played) >= 5 and file != last_played[0][0]:
             for i in range(3, -1, -1):
                 last_played[i + 1] = last_played[i]
-            last_played[0] = (file, colors1[colors.find(color)])
+            last_played[0] = (file, colors1[colors.find(color)], active_player)
         elif file != last_played[0][0]:
-            last_played.insert(0, (file, colors1[colors.find(color)]))
+            last_played.insert(0, (file, colors1[colors.find(color)], active_player))
     else:
-        last_played.append((file, colors1[colors.find(color)]))
+        last_played.append((file, colors1[colors.find(color)], active_player))
 
 
 def interesting():
@@ -137,6 +114,12 @@ def interesting():
     text = font.render(played, True, white, nice_one)
     textRect = text.get_rect()
     textRect.center = (797, 300)
+    screen.blit(text, textRect)
+    font = pygame.font.Font('freesansbold.ttf', 34)
+    played = 'Время последнего действия:'
+    text = font.render(played, True, white, nice_one)
+    textRect = text.get_rect()
+    textRect.center = (1170, 90)
     screen.blit(text, textRect)
 
 
@@ -178,7 +161,7 @@ def scale_card_blit(image, position, transform_ov=False):
     # scale the inputted card image to the global scale factors
     card_width = int(130 * scale_x)
     card_height = int(182 * scale_y)
-    if transform_ov:  # transform override for half image transform
+    if transform_ov:  # transform override for half (три:) image transform
         image = pygame.transform.scale(
             image, (card_width // 2, card_height // 2))
     else:
@@ -199,6 +182,7 @@ def draw_top_stack_card(board):
 
     O(1) runtime
     """
+
     if board.card_stack != []:
         top_card = board.card_stack[-1]
         top_card.rect = def_rect
@@ -211,15 +195,23 @@ def draw_top_stack_card(board):
 
     interesting()
 
-    for i in range(len(last_played)):
-        cards_last = game_classes.Card(last_played[i][1], last_played[i][0] + ".png", None)
+    for i in range(len(last_played) - 1):
+        cards_last = game_classes.Card(last_played[i + 1][1], last_played[i + 1][0] + ".png", None)
         cards_last.rect = def_rect
         cards_last.rect = cards_last.rect.move((screen_width - card_width)\
-            // 2 - 20 - card_width - (card_width + 15) * i, screen_height - (900 / 2) - card_height // 2)
+            // 2 - 20 - card_width - (card_width + 15) * i - 80, screen_height - (900 / 2) - card_height // 2)
         scale_card_blit(cards_last.card_data, cards_last.rect)
+    # Если будет время, то надо реализовать
+#        player_card = game_classes.Card('red', "small_cards/grey_" + str(active_player) + '.png', None)
+#        player_card.rect = def_small_rect
+#        player_card.rect = player_card.rect.move((screen_width - card_width)\
+#        // 2 - 20 - card_width - (card_width + 15) * i - 50, screen_height - (900 / 2) - card_height // 2 + 110)
+#        scale_card_blit(player_card.card_data, player_card.rect, transform_ov=True)
 
 
 def redraw_hand_visble(player, selected=None):
+    from PY_UNO import start_ticks
+    seconds = (pygame.time.get_ticks() - start_ticks) / 1000
     """
     Redraws a players hand to be face up.
 
@@ -227,10 +219,12 @@ def redraw_hand_visble(player, selected=None):
     """
     # player playing indicator placeholder graphic
     player_num = str(player.name[7])
+
     card_disp = game_classes.Card(
         "red", "small_cards/grey_" + player_num + ".png", None)
     card_disp.rect = card_disp.rect.move(10, screen_height - card_height - 10)
 
+    # dynamic card spacing
     # dynamic card spacing
     player_handsize = len(player.hand)
     if player_handsize <= 9:
@@ -256,8 +250,22 @@ def redraw_hand_visble(player, selected=None):
 
         card_index += 1
 
-    # displaying the placeholder playing player number
+    font = pygame.font.Font(None, 50)
+    time_text = font.render("{:.2f}".format(seconds) + " сек", True, (255, 255, 255))
+    screen.blit(time_text, (1430, 75))
     scale_card_blit(card_disp.card_data, card_disp.rect)
+    font = pygame.font.Font(None, 55)
+    global hey
+    played = 'Ходов до появление примера: ' + str((hey - game_logic.times) // 2)
+    if hey - game_logic.times <= 0:
+       hey += 6
+    text = font.render(played, True, white, nice_one)
+    textRect = text.get_rect()
+    textRect.center = (1250, 420)
+    screen.blit(text, textRect)
+
+
+
 
 
 def redraw_hand_nonvisble(player, start_horz, start_vert=0):
@@ -268,6 +276,8 @@ def redraw_hand_nonvisble(player, start_horz, start_vert=0):
     """
     # placeholder player num graphics
     player_num = str(player.name[7])
+    global players
+    players = player_num
     card_disp = game_classes.Card(
         "red", "small_cards/grey_" + player_num + ".png", None)
     card_disp.rect = card_disp.rect.move(start_horz + 10, start_vert + 10)
@@ -462,8 +472,9 @@ def draw_winners(winners):
     """
     # clear screen (top half)
     screen.fill(nice_one)
-    global last_played
+    global last_played, till_math
     last_played = []
+    till_math = 6
 
     # get a "middle" start postion for bliting cards
     start_pos = ((screen_width) // 2) - \
@@ -473,7 +484,7 @@ def draw_winners(winners):
     for player in winners:  # O(n)
         player_num = str(player.name[7])
         if ok == 0:
-            tp = 'Winner is player ' + str(player.name[7])
+            tp = 'Победителем стал игрок  ' + str(player.name[7])
             ok += 1
             print(player)
         card_disp = game_classes.Card(
@@ -488,7 +499,12 @@ def draw_winners(winners):
         textRect.center = (300, 400)
         screen.blit(text, textRect)
         target_index += 1
-
+    from PY_UNO import start_ticks
+    seconds = (pygame.time.get_ticks() - start_ticks) / 1000
+    font = pygame.font.Font(None, 60)
+    time_text = font.render("Матч завершен за " "{:.2f}".format(seconds) + " сек", True, (255, 255, 255))
+    screen.blit(time_text, (530, 675))
+    scale_card_blit(card_disp.card_data, card_disp.rect)
 
 
     # refresh the screen

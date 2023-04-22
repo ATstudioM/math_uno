@@ -1,3 +1,4 @@
+from random import randint
 
 import card_logic
 import display_funct
@@ -5,13 +6,14 @@ import game_control
 import Main_Decision_Tree
 import pygame
 import time
+import sqlite3
 
 # global list containing the winners in placement order
 global winners
 winners = []
 timing = time.time()
 what = 0
-
+times = 1
 
 def timer(seconds):
     start_time = time.time()
@@ -69,6 +71,10 @@ def compute_turn(players, turn, turn_iterator):
     O(1) runtime
     """
     turn = turn + turn_iterator
+    display_funct.till_math -= 1
+#    if display_funct.till_math == 0:
+
+#        display_funct.till_math = 6
     # catch to reloop over players array
     if turn < 0:
         turn = len(players) - 1
@@ -153,6 +159,7 @@ def check_game_done(players):
 
                 if select_UP:
                     # clear winners for next game
+                    pygame.quit()
                     winners = []
                     return True
 
@@ -160,7 +167,6 @@ def check_game_done(players):
 
 
 def extern_AI_player_turn(board, deck, player, players, turn):
-    timer(5)
     print('enemy')
     increment_card_old_vals(player)  # O(n)
     Main_Decision_Tree.travel_Main_Decision_Tree(board, deck, player,
@@ -169,11 +175,6 @@ def extern_AI_player_turn(board, deck, player, players, turn):
 
 
 def extern_player_turn(board, deck, player, players, turn):
-    #global what
-    #if what > 0:
-    #   time.sleep(5)
-    #what += 1
-    print("5 seconds")
     drop_again = True
     while drop_again:
         turn_done = False
@@ -223,6 +224,17 @@ def intern_player_turn(board, deck, player, allowed_card_list, selected):
     return (update, selected, turn_done)
 
 
+def need_math():
+    con = sqlite3.connect('db.sqlite3')
+    cur = con.cursor()
+    db = 'easiest'
+    hm = randint(1, 100)
+    cur.execute("SELECT * FROM " + db + " WHERE id = " + str(hm) + ";")
+    wait = cur.fetchone()
+    print(wait)
+    return wait[1], wait[2]
+
+
 def game_loop(board, deck, players):
     """
     Main logic and turn while loop that controlls the game.
@@ -245,9 +257,15 @@ def game_loop(board, deck, players):
     while True:
         player = players[turn]
         turn_tot += 1
+        global times
+        times = turn_tot
         print("Turn number:", turn_tot)
+# Пока что не работает
         print("PLAYER:", player.name, "TURN")
-
+        if player.name == "player_2AI":
+            display_funct.active_player = 2
+        else:
+            display_funct.active_player = 1
         if player.skip:
             if player.AI:
                 increment_card_old_vals(player)
@@ -272,6 +290,11 @@ def game_loop(board, deck, players):
             # in which a new game is started
             if restart_bool:
                 return
+
+        if turn_tot % 6 == 0:
+            print("MATH")
+            text, number = need_math()
+            game_control.answer_math(number, text)
 
         # iterate the turn
         turn = compute_turn(players, turn, board.turn_iterator)

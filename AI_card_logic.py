@@ -1,4 +1,5 @@
 import AI_functs
+import display_funct
 import game_logic
 import Main_Decision_Tree
 
@@ -106,6 +107,8 @@ def AI_card_played_type(board, deck, player, players, target=None, selected_colo
     played_color = board.color
 
     print("Played:", played_color, played_type, "by:", player.name)
+    print(player.name)
+    display_funct.adding(played_color, played_type)
 
 
     if played_color == "w":

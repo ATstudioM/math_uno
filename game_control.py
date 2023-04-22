@@ -118,6 +118,39 @@ def player_choice_color():
 ########################################################
 
 
+def update_text_field(text, text_input):
+    update = False
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if text_input.collidepoint(event.pos):
+                update = True
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                text = text[:-1]
+            elif event.key == pygame.K_RETURN:
+                print(text)
+                text = ''
+            else:
+                text += event.unicode
+    return text, update
+
+
+def answer_math(ok_text, texting):
+    active = False
+    text = ''
+    text_input = pygame.Rect(750, 400, 250, 100)
+    display_funct.pygame_text_input_field(text_input, text, active, texting)
+    while True:
+        (text, update) = update_text_field(text, text_input)
+        if update is True:
+            active = not active
+        display_funct.pygame_text_input_field(text_input, text, active, texting)
+        if str(ok_text) == str(text):
+            print('ok')
+            break
+
+
 def select_move_target(select_L, select_R, players, selected):
     """
     O(1) runtime

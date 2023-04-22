@@ -1,3 +1,5 @@
+import pygame
+
 from deck_gen import gen_rand_deck
 import display_funct
 import game_AI
@@ -6,7 +8,12 @@ import game_logic
 
 
 # loop for allowing multiple games to be restarted
+clock = pygame.time.Clock()
+start_ticks = pygame.time.get_ticks()
+clock.tick(60)
+
 while True:
+    seconds = (pygame.time.get_ticks() - start_ticks) / 1000
     # initilizing the board to be used within the game
     board1 = game_classes.Board("board1")
 
@@ -24,10 +31,7 @@ while True:
     # player5AI = game_AI.make_AI_basic(deck1, "player_5AI", 7)
     # player6AI = game_AI.make_AI_basic(deck1, "player_6AI", 7)
     # player7AI = game_AI.make_AI_basic(deck1, "player_7AI", 7)
-
     display_funct.redraw_hand_visble(player1, None)
-
-
     # enters into playing the game
     game_logic.game_loop(board1, deck1, [player1, player2AI
         # , player3AI, player4AI,
