@@ -2,5 +2,5 @@ There's my project for school based on the project Py_Uno of nklapse https://git
 
 Used under open source development, full credits go to him.
 
-To play open the PY_UNO.py and run it. 
+To play open the PY_UNO.py file and run it. 
 
